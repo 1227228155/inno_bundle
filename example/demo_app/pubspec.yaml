@@ -94,6 +94,8 @@ inno_bundle:
     - english
     - french
     - arabic
+    - chineseSimplified
+    - chineseTraditional
   admin: auto
   arch: x64_compatible
   files:

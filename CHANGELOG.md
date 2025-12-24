@@ -1,3 +1,9 @@
+## 0.11.3
+
+- Add Chinese language support (Simplified and Traditional Chinese) for Inno Setup installers.
+  - Added `chineseSimplified` language option using `Languages\Unofficial\ChineseSimplified.isl`
+  - Added `chineseTraditional` language option using `Languages\Unofficial\ChineseTraditional.isl`
+
 ## 0.11.2
 
 - Add screenshot to `pubspec.yaml`, it is used to display the package icon in [pub.dev](https://pub.dev/).
