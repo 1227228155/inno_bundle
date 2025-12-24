@@ -1,8 +1,10 @@
 ## 0.11.3
 
 - Add Chinese language support (Simplified and Traditional Chinese) for Inno Setup installers.
-  - Added `chineseSimplified` language option using `Languages\Unofficial\ChineseSimplified.isl`
-  - Added `chineseTraditional` language option using `Languages\Unofficial\ChineseTraditional.isl`
+  - Added `chineseSimplified` language option with automatic download from GitHub
+  - Added `chineseTraditional` language option with automatic download from GitHub
+  - Implemented automatic language file downloading when not available in Inno Setup installation
+  - Added intelligent path handling for Chinese language files
 
 ## 0.11.2
 

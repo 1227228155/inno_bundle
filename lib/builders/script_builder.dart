@@ -30,6 +30,7 @@ import 'package:inno_bundle/utils/cli_logger.dart';
 import 'package:inno_bundle/utils/constants.dart';
 import 'package:inno_bundle/utils/functions.dart';
 import 'package:inno_bundle/utils/chinese_language_downloader.dart';
+import 'package:inno_bundle/utils/path_resolver.dart';
 
 /// A class responsible for generating the Inno Setup Script (ISS) file for the installer.
 class ScriptBuilder {
@@ -45,19 +46,12 @@ class ScriptBuilder {
   /// Generates the `[Setup]` section of the ISS script, containing metadata and
   /// configuration for the installer.
   String _setup() {
-    final outputDir = p.joinAll([
-      Directory.current.path,
-      ...installerBuildDir,
-      config.type.dirName,
-    ]);
+    final outputDir = PathResolver.getInstallerOutputDirectory(config.type.dirName);
 
     var installerIcon = config.installerIcon;
     // save default icon into temp directory to use its path.
     if (installerIcon == defaultInstallerIconPlaceholder) {
-      final installerIconDirPath = p.joinAll([
-        Directory.systemTemp.absolute.path,
-        "${camelCase(config.name)}Installer",
-      ]);
+      final installerIconDirPath = PathResolver.getBuildTempDirectory(config.name);
       installerIcon = persistDefaultInstallerIcon(installerIconDirPath);
     }
 
@@ -107,7 +101,11 @@ Type: filesandordirs; Name: "{app}\\*"
     Map<String, String>? chineseFilePaths;
     
     if (chineseLanguages.isNotEmpty) {
-      final tempDir = p.join(Directory.systemTemp.path, "${camelCase(config.name)}Installer", "Languages");
+      // Create a unique temporary directory for this build
+      final tempDir = p.join(
+        PathResolver.getBuildTempDirectory(config.name),
+        "Languages"
+      );
       chineseFilePaths = await ChineseLanguageDownloader.downloadChineseLanguageFiles(tempDir);
     }
     
@@ -164,12 +162,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
     }
 
     // copy all the files to the installer build directory
-    final scriptDirPath = p.joinAll([
-      Directory.systemTemp.absolute.path,
-      "${camelCase(config.name)}Installer",
+    final scriptDirPath = p.join(
+      PathResolver.getBuildTempDirectory(config.name),
       config.type.dirName,
-    ]);
-    Directory(scriptDirPath).createSync(recursive: true);
+    );
+    PathResolver.ensureDirectoryExists(scriptDirPath);
 
     for (final f in files) {
       final file = File(f.absolutePath);
@@ -300,16 +297,16 @@ end;
         _icons() +
         _run() +
         _downloadVcRedist();
-    final relScriptPath = p.joinAll([
-      ...installerBuildDir,
-      config.type.dirName,
-      "inno-script.iss",
-    ]);
-    final absScriptPath = p.join(Directory.current.path, relScriptPath);
-    final scriptFile = File(absScriptPath);
-    scriptFile.createSync(recursive: true);
+    
+    final outputDir = PathResolver.getInstallerOutputDirectory(config.type.dirName);
+    PathResolver.ensureDirectoryExists(outputDir);
+    
+    final scriptPath = p.join(outputDir, "inno-script.iss");
+    final scriptFile = File(scriptPath);
     scriptFile.writeAsStringSync(script);
-    CliLogger.success("Script generated $relScriptPath");
+    
+    final relativePath = PathResolver.getRelativePathFromWorkingDirectory(scriptPath);
+    CliLogger.success("Script generated $relativePath");
     return scriptFile;
   }
 }

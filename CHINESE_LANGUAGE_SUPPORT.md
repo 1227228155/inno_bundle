@@ -64,7 +64,35 @@ inno_bundle:
   arch: x64_compatible
 ```
 
-## 技术实现 / Technical Implementation
+## 插件使用场景优化 / Plugin Usage Optimization
+
+### Git 依赖引用 / Git Dependency Reference
+
+当通过 Git 引用使用 `inno_bundle` 时：
+
+When using `inno_bundle` via Git reference:
+
+```yaml
+dev_dependencies:
+  inno_bundle:
+    git:
+      url: https://github.com/1227228155/inno_bundle
+      ref: dev  # 或者其他分支或标签
+```
+
+### 路径处理优化 / Path Handling Optimization
+
+- **智能路径解析**: 自动识别当前工作目录（使用插件的项目目录）
+- **临时文件管理**: 使用唯一标识符避免多项目间的文件冲突
+- **缓存机制**: 中文语言文件被缓存到系统临时目录，避免重复下载
+- **相对路径支持**: 正确处理相对于项目根目录的资源文件路径
+
+- **Smart Path Resolution**: Automatically identifies the current working directory (the project using the plugin)
+- **Temporary File Management**: Uses unique identifiers to avoid file conflicts between multiple projects
+- **Caching Mechanism**: Chinese language files are cached to system temp directory to avoid repeated downloads
+- **Relative Path Support**: Correctly handles resource file paths relative to the project root
+
+### 技术实现 / Technical Implementation
 
 - 构建时自动检测 Inno Setup 安装目录中是否存在中文语言文件
 - 如果文件不存在，自动从 GitHub 下载最新版本
