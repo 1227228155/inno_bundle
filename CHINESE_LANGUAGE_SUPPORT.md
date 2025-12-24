@@ -1,4 +1,4 @@
-# 中文语言支持 / Chinese Language Support
+## 中文语言支持 / Chinese Language Support
 
 ## 概述 / Overview
 
@@ -10,6 +10,19 @@
 
 - **简体中文 (Simplified Chinese)**: `chineseSimplified`
 - **繁体中文 (Traditional Chinese)**: `chineseTraditional`
+
+## 自动下载功能 / Automatic Download Feature
+
+如果你的 Inno Setup 安装中没有中文语言文件，`inno_bundle` 会自动从可靠的源下载这些文件：
+
+If your Inno Setup installation doesn't have Chinese language files, `inno_bundle` will automatically download them from reliable sources:
+
+- **简体中文文件来源**: [kira-96/Inno-Setup-Chinese-Simplified-Translation](https://github.com/kira-96/Inno-Setup-Chinese-Simplified-Translation)
+- **繁体中文文件来源**: [jrsoftware/issrc (官方仓库)](https://github.com/jrsoftware/issrc)
+
+语言文件会被下载到临时目录中，并在构建过程中自动使用。
+
+Language files will be downloaded to a temporary directory and used automatically during the build process.
 
 ## 使用方法 / Usage
 
@@ -51,24 +64,29 @@ inno_bundle:
   arch: x64_compatible
 ```
 
-## 语言文件位置 / Language File Locations
+## 技术实现 / Technical Implementation
 
-- 简体中文: `Languages\Unofficial\ChineseSimplified.isl`
-- 繁体中文: `Languages\Unofficial\ChineseTraditional.isl`
+- 构建时自动检测 Inno Setup 安装目录中是否存在中文语言文件
+- 如果文件不存在，自动从 GitHub 下载最新版本
+- 使用绝对路径引用下载的语言文件，避免依赖 Inno Setup 的标准安装
+- 支持离线使用（如果文件已经下载过）
 
-这些语言文件来自 Inno Setup 官方仓库的非官方语言包。
-
-These language files come from the unofficial language pack in the official Inno Setup repository.
+- Automatically detects if Chinese language files exist in the Inno Setup installation directory during build
+- If files don't exist, automatically downloads the latest versions from GitHub
+- Uses absolute paths to reference downloaded language files, avoiding dependency on standard Inno Setup installation
+- Supports offline usage (if files have been downloaded previously)
 
 ## 注意事项 / Notes
 
-1. 确保你使用的是 Unicode 版本的 Inno Setup，以正确显示中文字符。
-2. 安装程序会根据用户的系统语言自动选择合适的语言。
-3. 如果用户的系统语言不匹配任何配置的语言，将使用第一个配置的语言作为默认语言。
+1. **网络连接**: 首次使用中文语言时需要网络连接来下载语言文件。
+2. **Unicode 支持**: 确保你使用的是 Unicode 版本的 Inno Setup，以正确显示中文字符。
+3. **自动语言选择**: 安装程序会根据用户的系统语言自动选择合适的语言。
+4. **缓存机制**: 下载的语言文件会被缓存，避免重复下载。
 
-1. Make sure you are using the Unicode version of Inno Setup to properly display Chinese characters.
-2. The installer will automatically select the appropriate language based on the user's system language.
-3. If the user's system language doesn't match any configured language, the first configured language will be used as the default.
+1. **Network Connection**: Internet connection is required for the first time using Chinese languages to download language files.
+2. **Unicode Support**: Make sure you are using the Unicode version of Inno Setup to properly display Chinese characters.
+3. **Automatic Language Selection**: The installer will automatically select the appropriate language based on the user's system language.
+4. **Caching Mechanism**: Downloaded language files are cached to avoid repeated downloads.
 
 ## 构建安装程序 / Building the Installer
 
@@ -78,6 +96,17 @@ Run the following command to build an installer with Chinese language support:
 
 ```bash
 dart run inno_bundle
+```
+
+如果是首次使用中文语言，你会看到下载进度信息：
+
+If it's your first time using Chinese languages, you'll see download progress information:
+
+```
+🌱  Downloading Chinese Simplified language file...
+✅  Chinese Simplified language file downloaded
+🌱  Downloading Chinese Traditional language file...
+✅  Chinese Traditional language file downloaded
 ```
 
 安装程序将包含所有配置的语言，用户可以在安装过程中选择他们偏好的语言。

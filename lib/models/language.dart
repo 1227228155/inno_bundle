@@ -50,8 +50,8 @@ enum Language {
   swedish("Languages\\Swedish.isl"),
   tamil("Languages\\Tamil.isl"),
   arabic("Languages\\Arabic.isl"),
-  chineseSimplified("Languages\\Unofficial\\ChineseSimplified.isl"),
-  chineseTraditional("Languages\\Unofficial\\ChineseTraditional.isl");
+  chineseSimplified("Languages\\ChineseSimplified.isl"),
+  chineseTraditional("Languages\\ChineseTraditional.isl");
 
   /// The filename of the language-specific Inno Setup language file.
   final String file;
@@ -68,6 +68,17 @@ enum Language {
   /// Generates the Inno Setup language item for this language.
   String get innoEntry {
     return "Name: \"$name\"; MessagesFile: \"compiler:$file\"";
+  }
+
+  /// Generates the Inno Setup language item with a custom file path.
+  /// This is useful for languages that require downloaded files.
+  String innoEntryWithPath(String customPath) {
+    return "Name: \"$name\"; MessagesFile: \"$customPath\"";
+  }
+
+  /// Returns true if this language requires special handling (e.g., downloading).
+  bool get requiresSpecialHandling {
+    return this == Language.chineseSimplified || this == Language.chineseTraditional;
   }
 
   /// Validate configuration option for [Language].

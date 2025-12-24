@@ -29,6 +29,7 @@ import 'package:inno_bundle/models/vcredist_mode.dart';
 import 'package:inno_bundle/utils/cli_logger.dart';
 import 'package:inno_bundle/utils/constants.dart';
 import 'package:inno_bundle/utils/functions.dart';
+import 'package:inno_bundle/utils/chinese_language_downloader.dart';
 
 /// A class responsible for generating the Inno Setup Script (ISS) file for the installer.
 class ScriptBuilder {
@@ -98,10 +99,31 @@ Type: filesandordirs; Name: "{app}\\*"
   }
 
   /// Generates the `[Languages]` section, defining the languages supported by the installer.
-  String _languages() {
+  Future<String> _languages() async {
     String section = "[Languages]\n";
+    
+    // Check if we need to download Chinese language files
+    final chineseLanguages = config.languages.where((l) => l.requiresSpecialHandling).toList();
+    Map<String, String>? chineseFilePaths;
+    
+    if (chineseLanguages.isNotEmpty) {
+      final tempDir = p.join(Directory.systemTemp.path, "${camelCase(config.name)}Installer", "Languages");
+      chineseFilePaths = await ChineseLanguageDownloader.downloadChineseLanguageFiles(tempDir);
+    }
+    
     for (final language in config.languages) {
-      section += '${language.innoEntry}\n';
+      if (language.requiresSpecialHandling && chineseFilePaths != null) {
+        // Use downloaded Chinese language files
+        final filePath = chineseFilePaths[language.name];
+        if (filePath != null) {
+          section += '${language.innoEntryWithPath(filePath)}\n';
+        } else {
+          CliLogger.warning('Chinese language file not found for ${language.name}, skipping...');
+        }
+      } else {
+        // Use standard language files
+        section += '${language.innoEntry}\n';
+      }
     }
     return '$section\n';
   }
@@ -268,10 +290,11 @@ end;
   /// Generates the ISS script file and returns its path.
   Future<File> build() async {
     CliLogger.info("Generating ISS script...");
+    final languagesSection = await _languages();
     final script = scriptHeader +
         _setup() +
         _installDelete() +
-        _languages() +
+        languagesSection +
         _tasks() +
         _files() +
         _icons() +
