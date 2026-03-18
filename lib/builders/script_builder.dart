@@ -55,6 +55,11 @@ class ScriptBuilder {
       installerIcon = persistDefaultInstallerIcon(installerIconDirPath);
     }
 
+    // VersionInfoVersion requires x.x.x.x format, strip build metadata (e.g. 1.2.3+4 -> 1.2.3.4)
+    final versionParts = config.version.replaceFirst('+', '.').split('.');
+    while (versionParts.length < 4) versionParts.add('0');
+    final versionInfo = versionParts.take(4).join('.');
+
     return '''
 [Setup]
 AppId=${config.id}
@@ -62,6 +67,11 @@ AppName=${config.name}
 UninstallDisplayName=${config.name}
 UninstallDisplayIcon={app}\\${config.exePubspecName}
 AppVersion=${config.version}
+VersionInfoVersion=$versionInfo
+VersionInfoDescription=${config.name} Setup
+VersionInfoCompany=${config.publisher}
+VersionInfoProductName=${config.name}
+VersionInfoProductVersion=$versionInfo
 AppPublisher=${config.publisher}
 AppPublisherURL=${config.url}
 AppSupportURL=${config.supportUrl}
@@ -204,6 +214,29 @@ Filename: "{app}\\${config.exePubspecName}"; Description: "{cm:LaunchProgram,{#S
 \n''';
   }
 
+  /// Generates the `[Code]` section that forcefully terminates the running app process
+  /// (including tray-minimized instances) before installation begins.
+  /// Returns empty string when vcRedist==download because that section already emits [Code].
+  String _closeApp() {
+    if (config.vcRedist == VcRedistMode.download) return '';
+    return '''
+[Code]
+// Forcefully kill the running app process (including tray instances) before install
+procedure KillRunningApp();
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill.exe', '/F /IM "${config.exePubspecName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  KillRunningApp();
+  Result := '';
+end;
+\n''';
+  }
+
   /// Generates the `[DownloadVcRedist]` section for downloading the Visual C++ Redistributable.
   /// This section will create a checkbox on the last page of the installer, checked it by default,
   /// if left checked after user click finish,
@@ -218,6 +251,20 @@ Filename: "{app}\\${config.exePubspecName}"; Description: "{cm:LaunchProgram,{#S
 var
   RunList: TNewCheckListBox;
   VCCheckBox: TNewCheckBox;
+
+// Forcefully kill the running app process (including tray instances) before install
+procedure KillRunningApp();
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill.exe', '/F /IM "${config.exePubspecName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  KillRunningApp();
+  Result := '';
+end;
 
 // Repositions the VCCheckBox relative to the RunList's current position when the window is resized
 procedure OnWizardFormResize(Sender: TObject);
@@ -296,6 +343,7 @@ end;
         _files() +
         _icons() +
         _run() +
+        _closeApp() +
         _downloadVcRedist();
     
     final outputDir = PathResolver.getInstallerOutputDirectory(config.type.dirName);
